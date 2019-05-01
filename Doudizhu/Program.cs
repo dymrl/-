@@ -11,7 +11,7 @@ namespace Doudizhu
         static void Main(string[] args)
         {
             Player[] Players = { new Player("Bill", false), new Player("Tom", false), new Player("Jack", true) };
-            DealCard(ref Players);
+            GameManager.DealCard(ref Players);
             for (int j = 0; j < 3; j++)
             {
                 Console.WriteLine(Players[j].ToString());
@@ -34,17 +34,17 @@ namespace Doudizhu
             }
 
             PokerGroup CardsA= new PokerGroup();
-            for(int i=0; i < 3; i++)
+            for(int i=0; i < 2; i++)
             {
                 Card tempCard = new Card((Color)i, 9);
                 CardsA.Cards.Add(tempCard);
             }
-            CardsA.Cards.Add(new Card((Color)2, 5));
+            //CardsA.Cards.Add(new Card((Color)2, 5));
             foreach (var tempCard in CardsA.Cards)
             {
                 Console.WriteLine(tempCard.ToString());
             }
-            Console.WriteLine(IsRules(CardsA));
+            Console.WriteLine(GameManager.IsRules(CardsA));
             Console.WriteLine(CardsA.type);
 
             PokerGroup CardsB = new PokerGroup();
@@ -58,7 +58,7 @@ namespace Doudizhu
             {
                 Console.WriteLine(tempCard.ToString());
             }
-            Console.WriteLine(IsRules(CardsB));
+            Console.WriteLine(GameManager.IsRules(CardsB));
             Console.WriteLine(CardsB.type);
 
             Console.WriteLine(CardsA > CardsB);
@@ -66,7 +66,293 @@ namespace Doudizhu
             Console.ReadLine();
         }
 
-        static private int[] ShuffleCards()
+
+
+    }
+
+    public class Player
+    {
+        private string Name
+        { set; get; }
+
+        public bool isLord;
+        public List<Card> Cards;
+
+        public string GetName()
+        {
+            return Name;
+        }
+
+        public void SetName(string Value)
+        {
+            Name = Value;
+        }
+
+        public Player(string Name, bool isLord)
+        {
+            SetName(Name);
+            this.isLord = isLord;
+            Cards = new List<Card>();
+        }
+
+        public Player()
+        {
+
+        }
+
+        public override string ToString()
+        {
+            if (isLord)
+                return "Lord " + Name;
+            else
+                return "Farmer " + Name;
+        }
+    }
+
+    public enum Color
+    {
+        Spade = 0,
+        Heart = 1,
+        Diamond = 2,
+        Club = 3,
+        BlackJoker = 4,
+        ColorJoker = 5
+    }
+
+    public class Card : IComparable<Card>
+    {
+        public Color Color;
+        public int Index;
+        //public int Index;
+        public Card(Color Color, int Index)
+        {
+            this.Color = Color;
+            this.Index = Index;
+        }
+        
+        public Card()
+        { }
+
+        public override string ToString()
+        {
+            switch (Index)
+            {
+                case 12:
+                    return "A " + Color;
+                case 13:
+                    return "2 " + Color;
+                case 9:
+                    return "J " + Color;
+                case 10:
+                    return "Q " + Color;
+                case 11:
+                    return "K " + Color;
+                case 14:
+                    return Index + " " + Color.ToString();
+                case 15:
+                    return Index + " " + Color.ToString();
+                default:
+                    return Index + 2 + " " + Color;
+            }
+        }
+
+        public int CompareTo(Card other)
+        {
+            if (this.Index == other.Index)
+                return this.Color.CompareTo(other.Color);
+            else
+                return this.Index.CompareTo(other.Index);
+        }
+
+        public static bool operator ==(Card A, Card B)
+        {
+            return A.Index == B.Index;
+
+        }
+
+        public static bool operator !=(Card A, Card B)
+        {
+            return A.Index != B.Index;
+
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (obj == null) return false;
+            return this == (Card)obj;
+        }
+
+        public override int GetHashCode()
+        {
+            return Index.GetHashCode()^Color.GetHashCode();
+        }
+
+        public static bool operator <(Card A, Card B)
+        {
+            return A.Index < B.Index;
+        }
+
+        public static bool operator >(Card A, Card B)
+        {
+            return A.Index > B.Index;
+        }
+
+    }
+
+    public class PokerGroup
+    {
+        public List<Card> Cards = new List<Card>();
+        public PokerGroupType type;
+        public void Sort()
+        {
+            Cards.Sort();
+        }
+        public PokerGroup()
+        {
+
+        }
+        public static bool operator >(PokerGroup LP, PokerGroup RP)
+        {
+            bool IsGreater = false;
+            if (LP.type != RP.type && LP.type != PokerGroupType.炸弹 && LP.type != PokerGroupType.双王)
+            {
+                IsGreater = false;
+            }
+            else
+            {
+                if (LP.type == PokerGroupType.炸弹 && RP.type == PokerGroupType.炸弹) //LPRP都为炸弹
+                {
+                    if (LP.Cards[0] > RP.Cards[0]) //比较大小
+                    {
+                        IsGreater = true;
+                    }
+                    else
+                    {
+                        IsGreater = false;
+                    }
+                }
+                else
+                {
+                    if (LP.type == PokerGroupType.炸弹) //只有LP为炸弹
+                    {
+                        IsGreater = true;
+                    }
+                    else
+                    {
+                        if (LP.type == PokerGroupType.双王) //LP为双王
+                        {
+                            IsGreater = true;
+                        }
+                        else
+                        {
+                            if (LP.Cards[0] > RP.Cards[0]) //LP为普通牌组
+                            {
+                                IsGreater = true;
+                            }
+                            else
+                            {
+                                IsGreater = false;
+                            }
+                        }
+                    }
+                }
+            }
+            return IsGreater;
+        }
+
+        public static bool operator <(PokerGroup LP, PokerGroup RP)
+        {
+            bool IsGreater = false;
+            if (LP.type != RP.type && LP.type != PokerGroupType.炸弹 && LP.type != PokerGroupType.双王)
+            {
+                IsGreater = false;
+            }
+            else
+            {
+                if (LP.type == PokerGroupType.炸弹 && RP.type == PokerGroupType.炸弹) //LPRP都为炸弹
+                {
+                    if (LP.Cards[0] > RP.Cards[0]) //比较大小
+                    {
+                        IsGreater = true;
+                    }
+                    else
+                    {
+                        IsGreater = false;
+                    }
+                }
+                else
+                {
+                    if (LP.type == PokerGroupType.炸弹) //只有LP为炸弹
+                    {
+                        IsGreater = true;
+                    }
+                    else
+                    {
+                        if (LP.type == PokerGroupType.双王) //LP为双王
+                        {
+                            IsGreater = true;
+                        }
+                        else
+                        {
+                            if (LP.Cards[0] > RP.Cards[0]) //LP为普通牌组
+                            {
+                                IsGreater = true;
+                            }
+                            else
+                            {
+                                IsGreater = false;
+                            }
+                        }
+                    }
+                }
+            }
+            return !IsGreater;
+        }
+
+    }
+
+    public enum PokerGroupType
+    {
+        单张 = 1,
+        对子 = 2,
+        双王 = 3,
+        三张相同 = 4,
+        三带一 = 5,
+        炸弹 = 6,
+        五张顺子 = 7,
+        六张顺子 = 8,
+        三连对 = 9,
+        四带二 = 10,
+        二连飞机 = 11,
+        七张顺子 = 12,
+        四连对 = 13,
+        八张顺子 = 14,
+        飞机带翅膀 = 15,
+        九张顺子 = 16,
+        三连飞机 = 17,
+        五连对 = 18,
+        十张顺子 = 19,
+        十一张顺子 = 20,
+        十二张顺子 = 21,
+        四连飞机 = 22,
+        三连飞机带翅膀 = 23,
+        六连对 = 24,
+        //没有13
+        七连对 = 25,
+        五连飞机 = 26,
+        八连对 = 27,
+        四连飞机带翅膀 = 28,
+        //没有17
+        九连对 = 29,
+        六连飞机 = 30,
+        //没有19
+        十连对 = 31,
+        五连飞机带翅膀 = 32
+    }
+
+    public class GameManager
+    {
+        public static int[] ShuffleCards()
         {
             int[] CardIndex = new int[54];
             bool[] isCreate = new bool[54];
@@ -91,7 +377,7 @@ namespace Doudizhu
             return CardIndex;
         }
 
-        static private Card[] MakeCards()
+        public static Card[] MakeCards()
         {
             Card[] Cards = new Card[54];
             int i = 0;
@@ -127,12 +413,12 @@ namespace Doudizhu
                     j++;
                 }
             }
-            Cards[52] = new Card(Color.BlackJoker, 53);
-            Cards[53] = new Card(Color.ColorJoker, 54);
+            Cards[52] = new Card(Color.BlackJoker, 14);
+            Cards[53] = new Card(Color.ColorJoker, 15);
             return Cards;
         }
 
-        static private void DealCard(ref Player[] Players)
+        public static void DealCard(ref Player[] Players)
         {
             Card[] Cards = new Card[54];
             int[] CardIndex = ShuffleCards();
@@ -182,7 +468,7 @@ namespace Doudizhu
                     }
                     else
                     {
-                        if (leadPokers.Cards[0].Num == 53 && leadPokers.Cards[1].Num == 54)
+                        if (leadPokers.Cards[0].Index == 53 && leadPokers.Cards[1].Index == 54)
                         {
                             leadPokers.type = PokerGroupType.双王;
                             isRule = true;
@@ -485,7 +771,7 @@ namespace Doudizhu
             bool IsSame2 = false;
             for (int i = 0; i < amount - 1; i++) //从大到小比较相邻牌是否相同
             {
-                if (PG.Cards[i].Num == PG.Cards[i + 1].Num)
+                if (PG.Cards[i].Index == PG.Cards[i + 1].Index)
                 {
                     IsSame1 = true;
                 }
@@ -497,7 +783,7 @@ namespace Doudizhu
             }
             for (int i = PG.Cards.Count - 1; i > PG.Cards.Count - amount; i--)  //从小到大比较相邻牌是否相同
             {
-                if (PG.Cards[i].Num == PG.Cards[i - 1].Num)
+                if (PG.Cards[i].Index == PG.Cards[i - 1].Index)
                 {
                     IsSame2 = true;
                 }
@@ -526,7 +812,7 @@ namespace Doudizhu
             bool IsStraight = false;
             foreach (Card poker in PG.Cards)//不能包含2、小王、大王
             {
-                if (poker.Num == 2 || poker.Num == 53 || poker.Num == 54)
+                if (poker.Index == 2 || poker.Index == 53 || poker.Index == 54)
                 {
                     IsStraight = false;
                     return IsStraight;
@@ -534,7 +820,7 @@ namespace Doudizhu
             }
             for (int i = 0; i < PG.Cards.Count - 1; i++)
             {
-                if (PG.Cards[i].Num - 1 == PG.Cards[i + 1].Num)
+                if (PG.Cards[i].Index - 1 == PG.Cards[i + 1].Index)
                 {
                     IsStraight = true;
                 }
@@ -556,7 +842,7 @@ namespace Doudizhu
             bool IsLinkPair = false;
             foreach (Card poker in PG.Cards) //不能包含2、小王、大王
             {
-                if (poker.Num == 2 || poker.Num == 53 || poker.Num == 54)
+                if (poker.Index == 2 || poker.Index == 53 || poker.Index == 54)
                 {
                     IsLinkPair = false;
                     return IsLinkPair;
@@ -564,7 +850,7 @@ namespace Doudizhu
             }
             for (int i = 0; i < PG.Cards.Count - 2; i += 2)  //首先比较是否都为对子，再比较第一个对子的点数-1是否等于第二个对子，最后检察最小的两个是否为对子（这里的for循环无法检测到最小的两个，所以需要拿出来单独检查）
             {
-                if (PG.Cards[i].Num == PG.Cards[i + 1].Num && PG.Cards[i].Num - 1 == PG.Cards[i + 2].Num && PG.Cards[i + 2].Num == PG.Cards[i + 3].Num)
+                if (PG.Cards[i].Index == PG.Cards[i + 1].Index && PG.Cards[i].Index - 1 == PG.Cards[i + 2].Index && PG.Cards[i + 2].Index == PG.Cards[i + 3].Index)
                 {
                     IsLinkPair = true;
                 }
@@ -588,7 +874,7 @@ namespace Doudizhu
             PG = SameThreeSort(PG); //排序,把飞机放在前面
             for (int i = 2; i < PG.Cards.Count; i++)  //得到牌组中有几个飞机
             {
-                if (PG.Cards[i].Num == PG.Cards[i - 1].Num && PG.Cards[i].Num == PG.Cards[i - 2].Num)
+                if (PG.Cards[i].Index == PG.Cards[i - 1].Index && PG.Cards[i].Index == PG.Cards[i - 2].Index)
                 {
                     HowMuchLinkThree++;
                 }
@@ -599,7 +885,7 @@ namespace Doudizhu
                 {
                     for (int i = 0; i < HowMuchLinkThree * 3 - 3; i += 3) //判断飞机之间的点数是否相差1
                     {
-                        if (PG.Cards[i].Num != 2 && PG.Cards[i].Num - 1 == PG.Cards[i + 3].Num) //2点不能当飞机出
+                        if (PG.Cards[i].Index != 2 && PG.Cards[i].Index - 1 == PG.Cards[i + 3].Index) //2点不能当飞机出
                         {
                             IsThreeLinkPokers = true;
                         }
@@ -645,7 +931,7 @@ namespace Doudizhu
             // 比如有如下牌组: 998887777666 玩家要出的牌实际上应该为 888777666带997,但是经过从大到小的排序后变成了998887777666 一不美观,二不容易比较.
             for (int i = 2; i < PG.Cards.Count; i++)  //直接从2开始循环,因为PG[0],PG[1]的引用已经存储在其他变量中,直接比较即可
             {
-                if (PG.Cards[i].Num == PG.Cards[i - 2].Num && PG.Cards[i].Num == PG.Cards[i - 1].Num)// 比较PG[i]与PG[i-1],PG[i]与PG[i-2]是否同时相等,如果相等则说明这是三张相同牌
+                if (PG.Cards[i].Index == PG.Cards[i - 2].Index && PG.Cards[i].Index == PG.Cards[i - 1].Index)// 比较PG[i]与PG[i-1],PG[i]与PG[i-2]是否同时相等,如果相等则说明这是三张相同牌
                 {
                     if (Four >= 1) //默认的Four为0,所以第一次运行时这里为false,直接执行else
                                    //一旦连续出现两个三三相等,就会执行这里的if
@@ -681,10 +967,10 @@ namespace Doudizhu
                 Card changePoker;  //临时交换Poker
                 for (int i = 0; i < PG.Cards.Count; i++)  //把所有的三张牌往前移动
                 {
-                    if (PG.Cards[i].Num == tempPoker.Num)  //当PG[i]等于三张牌的点数时
+                    if (PG.Cards[i].Index == tempPoker.Index)  //当PG[i]等于三张牌的点数时
                     {
-                        if (PG.Cards[i].Num == FourPoker.Num) //由于上面已经把4张牌中的一张放到的最前面,这张牌也会与tempPoker相匹配所以这里进行处理
-                                                // 当第一次遇到四张牌的点数时,把记录四张牌的FourPoker赋值为null,并中断本次循环.由于FourPoker已经为Null,所以下次再次遇到四张牌的点数时会按照正常情况执行.
+                        if (PG.Cards[i].Index == FourPoker.Index) //由于上面已经把4张牌中的一张放到的最前面,这张牌也会与tempPoker相匹配所以这里进行处理
+                                                              // 当第一次遇到四张牌的点数时,把记录四张牌的FourPoker赋值为null,并中断本次循环.由于FourPoker已经为Null,所以下次再次遇到四张牌的点数时会按照正常情况执行.
                         {
                             FourPoker = null;
                             continue;
@@ -697,288 +983,7 @@ namespace Doudizhu
             }
             return PG;
         }
-
     }
-
-    public class Player
-    {
-        private string Name
-        { set; get; }
-
-        public bool isLord;
-        public List<Card> Cards;
-
-        public string GetName()
-        {
-            return Name;
-        }
-
-        public void SetName(string Value)
-        {
-            Name = Value;
-        }
-
-        public Player(string Name, bool isLord)
-        {
-            SetName(Name);
-            this.isLord = isLord;
-            Cards = new List<Card>();
-        }
-
-        public Player()
-        {
-
-        }
-
-        public override string ToString()
-        {
-            if (isLord)
-                return "Lord " + Name;
-            else
-                return "Farmer " + Name;
-        }
-    }
-
-    public enum Color
-    {
-        Spade = 0,
-        Heart = 1,
-        Diamond = 2,
-        Club = 3,
-        BlackJoker = 4,
-        ColorJoker = 5
-    }
-
-    public class Card : IComparable<Card>
-    {
-        public Color Color;
-        public int Num;
-        //public int Index;
-        public Card(Color Color, int Num)
-        {
-            this.Color = Color;
-            this.Num = Num;
-        }
-        
-        public Card()
-        { }
-
-        public override string ToString()
-        {
-            switch (Num)
-            {
-                case 1:
-                    return "A " + Color;
-                case 11:
-                    return "J " + Color;
-                case 12:
-                    return "Q " + Color;
-                case 13:
-                    return "K " + Color;
-                case 53:
-                    return Color.ToString();
-                case 54:
-                    return Color.ToString();
-                default:
-                    return Num + " " + Color;
-            }
-        }
-
-        public int CompareTo(Card other)
-        {
-            if (this.Num == other.Num)
-                return this.Color.CompareTo(other.Color);
-            else
-                return this.Num.CompareTo(other.Num);
-        }
-
-        public static bool operator ==(Card A, Card B)
-        {
-            return A.Num == B.Num;
-
-        }
-
-        public static bool operator !=(Card A, Card B)
-        {
-            return A.Num != B.Num;
-
-        }
-
-        public override bool Equals(object obj)
-        {
-            if (obj == null) return false;
-            return this == (Card)obj;
-        }
-
-        public override int GetHashCode()
-        {
-            return Num.GetHashCode()^Color.GetHashCode();
-        }
-
-        public static bool operator <(Card A, Card B)
-        {
-            return A.Num < B.Num;
-        }
-
-        public static bool operator >(Card A, Card B)
-        {
-            return A.Num > B.Num;
-        }
-
-    }
-
-    public class PokerGroup
-    {
-        public List<Card> Cards = new List<Card>();
-        public PokerGroupType type;
-        public void Sort()
-        {
-            Cards.Sort();
-        }
-        public PokerGroup()
-        {
-
-        }
-        public static bool operator >(PokerGroup LP, PokerGroup RP)
-        {
-            bool IsGreater = false;
-            if (LP.type != RP.type && LP.type != PokerGroupType.炸弹 && LP.type != PokerGroupType.双王)
-            {
-                IsGreater = false;
-            }
-            else
-            {
-                if (LP.type == PokerGroupType.炸弹 && RP.type == PokerGroupType.炸弹) //LPRP都为炸弹
-                {
-                    if (LP.Cards[0] > RP.Cards[0]) //比较大小
-                    {
-                        IsGreater = true;
-                    }
-                    else
-                    {
-                        IsGreater = false;
-                    }
-                }
-                else
-                {
-                    if (LP.type == PokerGroupType.炸弹) //只有LP为炸弹
-                    {
-                        IsGreater = true;
-                    }
-                    else
-                    {
-                        if (LP.type == PokerGroupType.双王) //LP为双王
-                        {
-                            IsGreater = true;
-                        }
-                        else
-                        {
-                            if (LP.Cards[0] > RP.Cards[0]) //LP为普通牌组
-                            {
-                                IsGreater = true;
-                            }
-                            else
-                            {
-                                IsGreater = false;
-                            }
-                        }
-                    }
-                }
-            }
-            return IsGreater;
-        }
-
-        public static bool operator <(PokerGroup LP, PokerGroup RP)
-        {
-            bool IsGreater = false;
-            if (LP.type != RP.type && LP.type != PokerGroupType.炸弹 && LP.type != PokerGroupType.双王)
-            {
-                IsGreater = false;
-            }
-            else
-            {
-                if (LP.type == PokerGroupType.炸弹 && RP.type == PokerGroupType.炸弹) //LPRP都为炸弹
-                {
-                    if (LP.Cards[0] > RP.Cards[0]) //比较大小
-                    {
-                        IsGreater = true;
-                    }
-                    else
-                    {
-                        IsGreater = false;
-                    }
-                }
-                else
-                {
-                    if (LP.type == PokerGroupType.炸弹) //只有LP为炸弹
-                    {
-                        IsGreater = true;
-                    }
-                    else
-                    {
-                        if (LP.type == PokerGroupType.双王) //LP为双王
-                        {
-                            IsGreater = true;
-                        }
-                        else
-                        {
-                            if (LP.Cards[0] > RP.Cards[0]) //LP为普通牌组
-                            {
-                                IsGreater = true;
-                            }
-                            else
-                            {
-                                IsGreater = false;
-                            }
-                        }
-                    }
-                }
-            }
-            return !IsGreater;
-        }
-
-    }
-
-    public enum PokerGroupType
-    {
-        单张 = 1,
-        对子 = 2,
-        双王 = 3,
-        三张相同 = 4,
-        三带一 = 5,
-        炸弹 = 6,
-        五张顺子 = 7,
-        六张顺子 = 8,
-        三连对 = 9,
-        四带二 = 10,
-        二连飞机 = 11,
-        七张顺子 = 12,
-        四连对 = 13,
-        八张顺子 = 14,
-        飞机带翅膀 = 15,
-        九张顺子 = 16,
-        三连飞机 = 17,
-        五连对 = 18,
-        十张顺子 = 19,
-        十一张顺子 = 20,
-        十二张顺子 = 21,
-        四连飞机 = 22,
-        三连飞机带翅膀 = 23,
-        六连对 = 24,
-        //没有13
-        七连对 = 25,
-        五连飞机 = 26,
-        八连对 = 27,
-        四连飞机带翅膀 = 28,
-        //没有17
-        九连对 = 29,
-        六连飞机 = 30,
-        //没有19
-        十连对 = 31,
-        五连飞机带翅膀 = 32
-    }
-
-
 }
 
 
